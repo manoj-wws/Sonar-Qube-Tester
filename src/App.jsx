@@ -11,7 +11,7 @@ function App() {
     const userInput = "alert('Hacked!')"; // Simulating user input
     eval(userInput); // 🚨 Dangerous: eval() executes arbitrary code!
   }; 
-  const unUsedVar="Sdfgdfg"   
+  const unUsedVar="Sdfgdfg"    
 
   const API_KEY = "12345-SECRET-KEY"; // 🚨 Hardcoded secret (should be in env variables)
 console.log("Using API Key:", API_KEY);

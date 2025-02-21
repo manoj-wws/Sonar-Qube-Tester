@@ -48,30 +48,24 @@ jobs:
           SONAR_URL="https://sonarcloud.io/api/issues/search?organization=front-end-project&componentKeys=manoj-wws_Sonar-Qube-Tester&resolved=false"
           RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "$SONAR_URL")
 
-          # Debugging: Print the full response
-          echo "SonarCloud API Response:"
-          echo "$RESPONSE"
+          echo "SonarCloud API Response: $RESPONSE"
 
-          # Extract issue count
-          ISSUE_COUNT=$(echo "$RESPONSE" | jq '.total')
+          ISSUE_COUNT=$(echo "$RESPONSE" | jq '.total // 0')
           echo "Total Issues Found: $ISSUE_COUNT"
           echo "issue_count=$ISSUE_COUNT" >> $GITHUB_ENV
 
           if [[ "$ISSUE_COUNT" -gt 0 ]]; then
-            ISSUE_MESSAGE=$(echo "$RESPONSE" | jq -r '.issues[0].message')
-            ISSUE_FILE=$(echo "$RESPONSE" | jq -r '.issues[0].component')
-            ISSUE_LINE=$(echo "$RESPONSE" | jq -r '.issues[0].line')
-            ISSUE_SEVERITY=$(echo "$RESPONSE" | jq -r '.issues[0].severity')
-            ISSUE_RULE_URL="https://sonarcloud.io/organizations/front-end-project/issues?open=$(echo "$RESPONSE" | jq -r '.issues[0].key')"
+            ISSUE_MESSAGE=$(echo "$RESPONSE" | jq -r '.issues[0].message // empty')
+            ISSUE_FILE=$(echo "$RESPONSE" | jq -r '.issues[0].component // empty')
+            ISSUE_LINE=$(echo "$RESPONSE" | jq -r '.issues[0].line // empty')
+            ISSUE_SEVERITY=$(echo "$RESPONSE" | jq -r '.issues[0].severity // empty')
+            ISSUE_RULE_URL="https://sonarcloud.io/organizations/front-end-project/issues?open=$(echo "$RESPONSE" | jq -r '.issues[0].key // empty')"
 
-            echo "First Issue: $ISSUE_MESSAGE in $ISSUE_FILE (Line: $ISSUE_LINE, Severity: $ISSUE_SEVERITY)"
-
-            # Save values to ENV file
-            echo "issue_message=$ISSUE_MESSAGE" >> $GITHUB_ENV
-            echo "issue_file=$ISSUE_FILE" >> $GITHUB_ENV
-            echo "issue_line=$ISSUE_LINE" >> $GITHUB_ENV
-            echo "issue_severity=$ISSUE_SEVERITY" >> $GITHUB_ENV
-            echo "issue_rule_url=$ISSUE_RULE_URL" >> $GITHUB_ENV
+            echo "ISSUE_MESSAGE=$ISSUE_MESSAGE" >> $GITHUB_ENV
+            echo "ISSUE_FILE=$ISSUE_FILE" >> $GITHUB_ENV
+            echo "ISSUE_LINE=$ISSUE_LINE" >> $GITHUB_ENV
+            echo "ISSUE_SEVERITY=$ISSUE_SEVERITY" >> $GITHUB_ENV
+            echo "ISSUE_RULE_URL=$ISSUE_RULE_URL" >> $GITHUB_ENV
           else
             echo "No issues found by SonarCloud."
           fi
@@ -88,27 +82,32 @@ jobs:
           fi
 
       - name: Create GitHub Issue (if new issues found)
-        if: env.issue_count > 0
+        if: ${{ env.issue_count != '' && env.issue_count != '0' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Checking for extracted issue data..."
-          echo "Message: $ISSUE_MESSAGE"
-          echo "File: $ISSUE_FILE"
-          echo "Severity: $ISSUE_SEVERITY"
-          echo "Rule URL: $ISSUE_RULE_URL"
+          echo "Message: ${{ env.ISSUE_MESSAGE }}"
+          echo "File: ${{ env.ISSUE_FILE }}"
+          echo "Severity: ${{ env.ISSUE_SEVERITY }}"
+          echo "Rule URL: ${{ env.ISSUE_RULE_URL }}"
 
-          if [[ -z "$ISSUE_MESSAGE" || -z "$ISSUE_FILE" || -z "$ISSUE_SEVERITY" || -z "$ISSUE_RULE_URL" ]]; then
+          if [[ -z "${{ env.ISSUE_MESSAGE }}" || -z "${{ env.ISSUE_FILE }}" || -z "${{ env.ISSUE_SEVERITY }}" || -z "${{ env.ISSUE_RULE_URL }}" ]]; then
             echo "⚠️ No valid issue data received from SonarCloud. Skipping issue creation."
             exit 0
           fi
 
-          ISSUE_TITLE="🚨 [$ISSUE_SEVERITY] SonarCloud Issue in $(basename $ISSUE_FILE)"
-          ISSUE_BODY="**Issue:** $ISSUE_MESSAGE\n\n
-          **File:** \`$(basename $ISSUE_FILE)\`\n
-          **Line:** $ISSUE_LINE\n
-          **Severity:** $ISSUE_SEVERITY\n
-          **SonarCloud Report:** [View Issue]($ISSUE_RULE_URL)\n\n
-          Please check and resolve this issue."
+          ISSUE_TITLE="🚨 [${{ env.ISSUE_SEVERITY }}] SonarCloud Issue in $(basename "${{ env.ISSUE_FILE }}")"
+          ISSUE_BODY=$(cat <<EOF
+          **Issue:** ${{ env.ISSUE_MESSAGE }}
+
+          **File:** \`$(basename "${{ env.ISSUE_FILE }}")\`
+          **Line:** ${{ env.ISSUE_LINE }}
+          **Severity:** ${{ env.ISSUE_SEVERITY }}
+          **SonarCloud Report:** [View Issue](${{ env.ISSUE_RULE_URL }})
+
+          Please check and resolve this issue.
+          EOF
+          )
 
           gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "SonarCloud" --repo ${{ github.repository }}
