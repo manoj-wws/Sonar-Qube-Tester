@@ -1,0 +1,29 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches:
+      - main  
+  pull_request:
+    branches:
+      - main  
+
+jobs:
+  sonar:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install  
+
+      - name: SonarCloud Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          npx sonarqube-scanner \
+            -Dsonar.organization=front-end-project \
+            -Dsonar.projectKey=front-end-project \
+            -Dsonar.host.url=https://sonarcloud.io
