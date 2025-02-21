@@ -8,6 +8,11 @@ on:
     branches:
       - main  
 
+permissions:
+  contents: read
+  issues: write  # ✅ Allows creating and modifying issues
+  metadata: read  # ✅ Required for API interactions
+
 jobs:
   sonar:
     name: SonarCloud Scan
@@ -46,7 +51,7 @@ jobs:
           echo "Issue count: $ISSUE_COUNT"
           echo "issue_count=$ISSUE_COUNT" >> $GITHUB_ENV
 
-          # Extract first issue details (Modify to loop for multiple issues if needed)
+          # Extract first issue details
           ISSUE_MESSAGE=$(echo "$RESPONSE" | jq -r '.issues[0].message')
           ISSUE_FILE=$(echo "$RESPONSE" | jq -r '.issues[0].component')
           ISSUE_SEVERITY=$(echo "$RESPONSE" | jq -r '.issues[0].severity')
