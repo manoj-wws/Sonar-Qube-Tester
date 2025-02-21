@@ -5,6 +5,7 @@ import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
+  const unusedVar = "I am not used anywhere"; // 🚨 Unused variable (Code Smell)
 
   return (
     <>
