@@ -12,6 +12,17 @@ function App() {
     eval(userInput); // 🚨 Dangerous: eval() executes arbitrary code!
   };
   const unUsedVar="Sdfgdfg"   
+
+  const API_KEY = "12345-SECRET-KEY"; // 🚨 Hardcoded secret (should be in env variables)
+console.log("Using API Key:", API_KEY);
+
+function testFunction() {
+  return;
+  console.log("This will never be executed!"); // 🚨 Unreachable code
+}
+testFunction();
+
+
  
   return (
     <>
