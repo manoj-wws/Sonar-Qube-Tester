@@ -10,7 +10,7 @@ function App() {
   const executeCode = () => {
     const userInput = "alert('Hacked!')"; // Simulating user input
     eval(userInput); // 🚨 Dangerous: eval() executes arbitrary code!
-  };
+  }; 
   const unUsedVar="Sdfgdfg"   
 
   const API_KEY = "12345-SECRET-KEY"; // 🚨 Hardcoded secret (should be in env variables)
