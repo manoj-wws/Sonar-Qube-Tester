@@ -11,7 +11,7 @@ on:
 permissions:
   contents: read
   issues: write  # ✅ Allows creating and modifying issues
-  metadata: read  # ✅ Required for API interactions
+  pull-requests: read  # ✅ Required for PR analysis
 
 jobs:
   sonar:
