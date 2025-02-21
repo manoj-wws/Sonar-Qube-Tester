@@ -11,6 +11,7 @@ function App() {
     const userInput = "alert('Hacked!')"; // Simulating user input
     eval(userInput); // 🚨 Dangerous: eval() executes arbitrary code!
   };
+  const unUsedVar="Sdfgdfg"
 
   return (
     <>

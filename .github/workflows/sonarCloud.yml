@@ -38,27 +38,47 @@ jobs:
       - name: Fetch SonarCloud Issues
         id: sonar_issues
         run: |
-          # Fetch issues using SonarCloud Web API
           SONAR_URL="https://sonarcloud.io/api/issues/search?organization=front-end-project&componentKeys=manoj-wws_Sonar-Qube-Tester&resolved=false"
           RESPONSE=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" "$SONAR_URL")
-          
-          # Extract new issues count
+
+          # Extract issue count
           ISSUE_COUNT=$(echo "$RESPONSE" | jq '.total')
           echo "Issue count: $ISSUE_COUNT"
-
-          # Save issue data to a file (optional)
-          echo "$RESPONSE" > sonar_issues.json
-          
-          # Pass issue count as an output
           echo "issue_count=$ISSUE_COUNT" >> $GITHUB_ENV
+
+          # Extract first issue details (Modify to loop for multiple issues if needed)
+          ISSUE_MESSAGE=$(echo "$RESPONSE" | jq -r '.issues[0].message')
+          ISSUE_FILE=$(echo "$RESPONSE" | jq -r '.issues[0].component')
+          ISSUE_SEVERITY=$(echo "$RESPONSE" | jq -r '.issues[0].severity')
+          ISSUE_RULE_URL="https://sonarcloud.io/organizations/front-end-project/issues?open=$(echo "$RESPONSE" | jq -r '.issues[0].key')"
+
+          echo "First Issue: $ISSUE_MESSAGE in $ISSUE_FILE (Severity: $ISSUE_SEVERITY)"
+          echo "issue_message=$ISSUE_MESSAGE" >> $GITHUB_ENV
+          echo "issue_file=$ISSUE_FILE" >> $GITHUB_ENV
+          echo "issue_severity=$ISSUE_SEVERITY" >> $GITHUB_ENV
+          echo "issue_rule_url=$ISSUE_RULE_URL" >> $GITHUB_ENV
+
+      - name: Ensure "SonarCloud" Label Exists
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh label list --repo ${{ github.repository }} | grep -q "SonarCloud"; then
+            echo "Creating 'SonarCloud' label..."
+            gh label create "SonarCloud" --description "Issues found by SonarCloud analysis" --color "#0e8a16" --repo ${{ github.repository }}
+          else
+            echo "'SonarCloud' label already exists."
+          fi
 
       - name: Create GitHub Issue (if new issues found)
         if: env.issue_count > 0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ISSUE_TITLE="🚨 New SonarCloud Issues Detected"
-          ISSUE_BODY="SonarCloud has detected ${{ env.issue_count }} new issue(s). Check the report: [SonarCloud Report](https://sonarcloud.io/project/issues?id=manoj-wws_Sonar-Qube-Tester)\n\n"
-          
-          # Create a GitHub Issue
+          ISSUE_TITLE="🚨 [$ISSUE_SEVERITY] SonarCloud Issue in $ISSUE_FILE"
+          ISSUE_BODY="**Issue:** $ISSUE_MESSAGE\n\n
+          **File:** $ISSUE_FILE\n
+          **Severity:** $ISSUE_SEVERITY\n
+          **SonarCloud Report:** [View Issue]($ISSUE_RULE_URL)\n\n
+          Please check and resolve this issue."
+
           gh issue create --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "SonarCloud" --repo ${{ github.repository }}
