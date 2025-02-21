@@ -27,3 +27,5 @@ jobs:
             -Dsonar.organization=front-end-project \
             -Dsonar.projectKey=manoj-wws_Sonar-Qube-Tester \
             -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.projectVersion=${{ env.SONAR_VERSION }}
+

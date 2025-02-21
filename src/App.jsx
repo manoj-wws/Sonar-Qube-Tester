@@ -6,6 +6,12 @@ import './App.css'
 function App() {
   const [count, setCount] = useState(0)
 
+  // 🚨 Security Issue: Using eval() (High-Risk Code)
+  const executeCode = () => {
+    const userInput = "alert('Hacked!')"; // Simulating user input
+    eval(userInput); // 🚨 Dangerous: eval() executes arbitrary code!
+  };
+
   return (
     <>
       <div>
@@ -21,6 +27,7 @@ function App() {
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
+        <button onClick={executeCode}>Run Dangerous Code</button> {/* 🚨 Unsafe Button */}
         <p>
           Edit <code>src/App.jsx</code> and save to test HMR
         </p>
