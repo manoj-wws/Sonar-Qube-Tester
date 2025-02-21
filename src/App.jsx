@@ -17,7 +17,7 @@ function App() {
 console.log("Using API Key:", API_KEY);
 
 function testFunction() {
-  return;
+  return; 
   console.log("This will never be executed!"); // 🚨 Unreachable code
 }
 testFunction();
