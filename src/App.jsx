@@ -16,7 +16,7 @@ function App() {
   const API_KEY = "12345-SECRET-KEY"; // 🚨 Hardcoded secret (should be in env variables)
 console.log("Using API Key:", API_KEY);
 
-function testFunction() {
+function testFunction() { 
   return; 
   console.log("This will never be executed !"); // 🚨 Unreachable code
 }
